@@ -3,7 +3,8 @@ const genericErrors = {
     THREE_CHARACTERS_MIN: 'deve possuir, pelo menos 3 caracteres',
     NOT_VALID: 'não é válido',
     INVALID_FIELD: 'é inválido',
-    INVALID_DATE: 'é uma data inválida'
+    INVALID_DATE: 'é uma data inválida',
+    NOT_ARRAY: 'não é um array'
 };
 
 const validateTime = time => {

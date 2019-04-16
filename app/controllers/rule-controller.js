@@ -12,12 +12,11 @@ exports.createRule = (req, res, next) => {
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
-    const { type, specific_day, start_time, end_time, week_days, rule_name } = req.body;
+    const { type, specific_day, intervals, week_days, rule_name } = req.body;
     const dataInsert = {
       type,
       specific_day: specific_day || null,
-      start_time,
-      end_time,
+      intervals,
       week_days: week_days || null,
       rule_name,
       id: slugify(rule_name)
@@ -96,17 +95,33 @@ exports.validate = method => {
           }
           return Promise.resolve(day);
         }),
-        body('start_time', genericErrors.NOT_EXISTS).exists(),
-        body('start_time').custom(start_time => {
+        body('intervals', genericErrors.NOT_EXISTS)
+        .exists(),
+        body('intervals', genericErrors.NOT_ARRAY)
+        .isArray(),
+        body('intervals', genericErrors.NOT_ARRAY)
+        .custom(intervals => {
+          if (intervals.length === 0) {
+            return Promise.reject(genericErrors.INVALID_FIELD);
+          }
+          return Promise.resolve(intervals);
+        }),
+        body('intervals.*.start_time', genericErrors.NOT_EXISTS).exists(),
+        body('intervals.*.start_time').custom(start_time => {
+          console.log(start_time);
           if (start_time && validateTime(start_time) === false) {
             return Promise.reject(genericErrors.INVALID_FIELD);
+          } else if (typeof start_time === "undefined") {
+            return Promise.reject(genericErrors.NOT_EXISTS);
           }
           return Promise.resolve(start_time);
         }),
-        body('end_time', genericErrors.NOT_EXISTS).exists(),
-        body('end_time').custom(end_time => {
+        body('intervals.*.end_time', genericErrors.NOT_EXISTS).exists(),
+        body('intervals.*.end_time').custom(end_time => {
           if (end_time && validateTime(end_time) === false) {
             return Promise.reject(genericErrors.INVALID_FIELD);
+          } else if (typeof end_time === "undefined") {
+            return Promise.reject(genericErrors.NOT_EXISTS);
           }
           return Promise.resolve(end_time);
         })
