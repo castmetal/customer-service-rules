@@ -1,6 +1,6 @@
 {
   "name": "customer-service-rules",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This is API of Back-end Challenge - Customer Service Rules",
   "main": "server.js",
   "scripts": {
