@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 let createError = require('http-errors');
 let express = require('express');
 let logger = require('morgan');
@@ -6,6 +8,7 @@ let rulesRouter = require('./routes/rules');
 let app = express();
 const environment = process.env.NODE_ENV || 'dev';
 const basePath = process.env.SERVICE_PATH || '/customer-service';
+
 app.use(logger(environment));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
