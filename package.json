@@ -1,0 +1,31 @@
+{
+  "name": "customer-service-rules",
+  "version": "1.0.0",
+  "description": "This is API of Back-end Challenge - Customer Service Rules",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/castmetal/customer-service-rules.git"
+  },
+  "keywords": [
+    "back-end",
+    "challenge",
+    "cubos"
+  ],
+  "author": "Michel La Guardia",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/castmetal/customer-service-rules/issues"
+  },
+  "homepage": "https://github.com/castmetal/customer-service-rules#readme",
+  "dependencies": {
+    "dotenv": "^7.0.0",
+    "express": "^4.16.4",
+    "http-errors": "^1.7.2",
+    "morgan": "^1.9.1"
+  }
+}
