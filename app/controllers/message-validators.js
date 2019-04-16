@@ -12,8 +12,8 @@ const validateTime = time => {
     const splitTime = time.split(':');
     if (
       (splitTime.length === 0 || splitTime.length > 2) ||
-      (parseInt(splitTime[0]) > 23 || parseInt(splitTime[0]) < 1) ||
-      (parseInt(splitTime[1]) > 59 || parseInt(splitTime[1]) < 1)
+      (parseInt(splitTime[0]) > 23 || parseInt(splitTime[0]) < 0) ||
+      (parseInt(splitTime[1]) > 59 || parseInt(splitTime[1]) < 0)
     ){
       validReturn = false;
     }

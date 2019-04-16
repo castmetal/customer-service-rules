@@ -4,6 +4,7 @@ const slugify = require('slugify');
 const lodash = require('lodash');
 const { genericErrors, validateTime, validationHandler } = require('./message-validators');
 const fileHandler = require('./utils/file-utils');
+const { overlapSegments } = require('./utils/date');
 const singularModel = 'rule';
 const pluralModel = 'rules';
 const defaultRowReturn = {data:{}};
@@ -95,7 +96,7 @@ exports.deleteRule = (req, res, next) => {
 
 const verifyRuleName = (rule_name) => {
   let returnVerify = false;
-  const dataBase = fileHandler.getDatabase();
+  const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
     index => index.rule_name === rule_name
@@ -108,7 +109,7 @@ const verifyRuleName = (rule_name) => {
 
 const verifyRuleId = (rule_id) => {
   let returnVerify = false;
-  const dataBase = fileHandler.getDatabase();
+  const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
     index => index.id === rule_id
@@ -120,7 +121,7 @@ const verifyRuleId = (rule_id) => {
 }
 
 const deleteById = (rule_id) => {
-  const dataBase = fileHandler.getDatabase();
+  const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
     index => index.id !== rule_id
@@ -129,7 +130,7 @@ const deleteById = (rule_id) => {
 }
 
 const filterRules = (type, start_time, end_time) => {
-  const dataBase = fileHandler.getDatabase();
+  const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
     index => {
@@ -149,12 +150,18 @@ const filterRules = (type, start_time, end_time) => {
 }
 
 const filterIntervals = (intervals, start_time, end_time) => {
+  let timeSegments;
   intervals = intervals.filter(element => {
     if (!start_time && !end_time) {
       return true;
     }
     if (start_time && !end_time && start_time === element.start_time) {
       return true;
+    } else {
+      timeSegments = [];
+      timeSegments.push([element.start_time, element.end_time]);
+      timeSegments.push([start_time, end_time]);
+      return overlapSegments(timeSegments);
     }
   });
 
