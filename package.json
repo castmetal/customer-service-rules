@@ -4,8 +4,10 @@
   "description": "This is API of Back-end Challenge - Customer Service Rules",
   "main": "server.js",
   "scripts": {
-    "test": "npm test",
-    "start": "node server.js"
+    "test": "TERM=dumb jest --coverage --verbose --runInBand --no-cache",
+    "start": "node server.js",
+    "lint": "eslint .",
+    "watch-test": "npm run test -- --watchAll"
   },
   "repository": {
     "type": "git",
@@ -25,10 +27,12 @@
   "dependencies": {
     "body-parser": "^1.18.3",
     "dotenv": "^7.0.0",
+    "eslint": "^5.16.0",
     "express": "^4.16.4",
     "express-validator": "^5.3.1",
     "fs": "0.0.1-security",
     "http-errors": "^1.7.2",
+    "jest": "^24.7.1",
     "lodash": "^4.17.11",
     "moment": "^2.24.0",
     "moment-range": "^4.0.2",
