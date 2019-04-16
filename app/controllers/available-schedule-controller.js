@@ -2,66 +2,130 @@ const { query } = require('express-validator/check');
 const moment = require('moment');
 const { genericErrors, validationHandler } = require('./message-validators');
 const fileHandler = require('./utils/file-utils');
-const { overlapSegments } = require('./utils/date');
-const lodash = require('lodash');
-const pluralModel = 'available-schedules';
-const defaultRowReturn = {data:{}};
-
-const newContextJson = json => {
-  const stringiFy = JSON.stringify(json);
-  return JSON.parse(stringiFy);
-};
-
-const returnPluralRow = (array, res) => {
-  res.set('Content-Type', 'application/json');
-  const returnData = newContextJson(defaultRowReturn);
-  returnData.data[pluralModel] = array;
-  return returnData;
+const { newContextJson } = require('./utils/json');
+const baseWeekDays = {
+  2: 'monday',
+  3: 'tuesday',
+  4: 'wednesday',
+  5: 'thursday',
+  6: 'friday',
+  7: 'saturday',
+  1: 'sunday',
 }
 
+/**
+ * Check if start_date is greater than end_date
+ * 
+ * @param {string} start - String of start_date
+ * @param {string} end - String of end_date
+ * @return {boolean} true, false
+ */
+const checkDate = (start, end) => {
+  let returnContext = true;
+  const mStart = moment(start, 'DD-MM-YYYY');
+  const mEnd = moment(end, 'DD-MM-YYYY');
+  const equal = start === end;
+  if (!equal) {
+    returnContext = mStart.isBefore(mEnd);
+  }
+  return returnContext;
+}
+
+/**
+ * Action getAvailableSchedules
+ * 
+ * @param {object} req - Request HTTP
+ * @param {object} res - HTTP Response
+ * @param {func} next - Callback
+ */
 exports.getAvailableSchedules = (req, res, next) => {
   req
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
+    const { start_date, end_date } = req.query;
+    if (!checkDate(start_date, end_date)) {
+      const error = new Error(`end_date deve ser maior ou igual que start_date`);
+      error.statusCode = 422;
+      error.code = "INVALID_FIELD";
+      return next(error);
+    }
     const availableSchedules = filterAvailableSchedules(start_date, end_date);
-    res.send({"getRules": "ok"});
+    res.send(availableSchedules);
   })
   .catch(next)
 }
 
-
-
+/**
+ * Filter Available Schedules - Based on start and end date
+ * 
+ * @param {string} start_date - String of start_date
+ * @param {string} end_date - String of end_date
+ * @return {array} AvailableSchedules
+ */
 const filterAvailableSchedules = (start_date, end_date) => {
-  const dataBase = newContextJson(fileHandler.getDatabase());
-  const rules = lodash.filter(
-    dataBase.data, 
-    index => {
-      if (!type && !start_time && !end_time) {
-        return true;
-      }
-
-      if (
-        (type && index.type === type && typeof rule_name === "undefined") ||
-        (rule_name && index.rule_name === rule_name && typeof type === "undefined") ||
-        (
-          rule_name && index.rule_name === rule_name && 
-          type && index.type === type
-        )
-      ) {
-        index.intervals = filterIntervals(index.intervals, start_time, end_time);
-        return (index.intervals.length > 0);
-      } else if (typeof rule_name === "undefined" && typeof type === "undefined") {
-        index.intervals = filterIntervals(index.intervals, start_time, end_time);
-        return (index.intervals.length > 0);
-      } else {
-        return false;
-      }
-    }
-  );
-  return rules;
+  const dataBaseRules = newContextJson(fileHandler.getDatabase());
+  const initial_date = moment(start_date, 'DD-MM-YYYY');
+  const final_date = moment(end_date, 'DD-MM-YYYY');
+  const diffDays = final_date.diff(initial_date, 'days');
+  let finalArray = [];
+  let date;
+  for (let i = 0; i <= diffDays; i += 1) {
+    date = moment(start_date, 'DD-MM-YYYY').add(i, 'days');
+    const day = date.format('DD-MM-YYYY');
+    finalArray[i] = {day};
+    finalArray[i].intervals = filterRulesByDate(day, dataBaseRules);
+  }
+  return finalArray;
 }
 
+/**
+ * Filter Rules Based on date Interval
+ * 
+ * @param {string} day - String of day
+ * @param {array} dataBaseRules - Array of rules
+ * @return {array} AvailableSchedules
+ */
+const filterRulesByDate = (day, dataBaseRules) => {
+  const mapRules = dataBaseRules.data.map(element => {
+    if (element.type === 'daily') {
+      return formatIntervals(element.intervals);
+    }
+    if (element.type === 'specific_day' && element.specific_day === day) {
+      return formatIntervals(element.intervals);
+    }
+    if (element.type === 'weekly') {
+      const dayWeek = moment(day, 'DD-MM-YYYY').day();
+      if (element.week_days.indexOf(baseWeekDays[dayWeek])) {
+        return formatIntervals(element.intervals);
+      }
+    } else {
+      return null;
+    }
+  });
+  return mapRules.filter(element => {
+    return (element !== null);
+  });
+}
+
+/**
+ * Parse Intervals based on object
+ * 
+ * @param {array} intervals - Array of intervals
+ * @return {array} intervals formated
+ */
+const formatIntervals = intervals => {
+  return intervals.map(element => {
+    return {start: element.start_time, end: element.end_time};
+  });
+}
+
+/**
+ * Validates API inputs on querys and request_data
+ * 
+ * @param {string} method - getAvailableSchedules
+ * @return {Promise} reject,resolve
+ */
 exports.validate = method => {
   switch (method) {
       case 'getAvailableSchedules': {

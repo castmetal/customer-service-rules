@@ -54,6 +54,8 @@ app.use((err, req, res, next) => {
   for (let i = 0; i < errorMessages.length; i += 1) {
     messages.push({message: errorMessages[i], code: err.code});
   }
+  
+  res.set('Content-Type', 'application/json');
   res.send({ errors: messages});
 });
 

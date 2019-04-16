@@ -5,29 +5,16 @@ const lodash = require('lodash');
 const { genericErrors, validateTime, validationHandler } = require('./message-validators');
 const fileHandler = require('./utils/file-utils');
 const { overlapSegments } = require('./utils/date');
+const { returnPluralRow, returnSingularRow, newContextJson } = require('./utils/json');
 const singularModel = 'rule';
 const pluralModel = 'rules';
-const defaultRowReturn = {data:{}};
 
-const newContextJson = json => {
-  const stringiFy = JSON.stringify(json);
-  return JSON.parse(stringiFy);
-};
-
-const returnSingularRow = (row, res) => {
-  res.set('Content-Type', 'application/json');
-  const returnData = newContextJson(defaultRowReturn);
-  returnData.data[singularModel] = row;
-  return returnData;
-}
-
-const returnPluralRow = (array, res) => {
-  res.set('Content-Type', 'application/json');
-  const returnData = newContextJson(defaultRowReturn);
-  returnData.data[pluralModel] = array;
-  return returnData;
-}
-
+/**
+ * Verify if end_time is greater than start_time
+ * 
+ * @param {array} intervals - Array of request.body.intervals
+ * @param {func} next - Callback
+ */
 const verifyIntervalEntry = (intervals, next) => {
   const tamInterval = intervals.length;
   for (let i = 0; i < tamInterval; i += 1) {
@@ -45,6 +32,13 @@ const verifyIntervalEntry = (intervals, next) => {
   }
 }
 
+/**
+ * Action createRule
+ * 
+ * @param {object} req - Request HTTP
+ * @param {object} res - HTTP Response
+ * @param {func} next - Callback
+ */
 exports.createRule = (req, res, next) => {
   req
   .getValidationResult()
@@ -61,6 +55,13 @@ exports.createRule = (req, res, next) => {
       error.code = 'RULE_EXISTS';
       return next(error);
     }
+    const segments = verifySegments(intervals, type, specific_day);
+    if (segments.status === false) {
+      const err = new Error(segments.message);
+      err.statusCode = 403;
+      err.code = 'RULE_EXISTS';
+      return next(err);
+    }
     const dataInsert = {
       id: slugify(rule_name),
       rule_name,
@@ -71,23 +72,67 @@ exports.createRule = (req, res, next) => {
     };
 
     fileHandler.insertRuleToDataBase(dataInsert);
-    res.send(returnSingularRow(dataInsert, res));
+    res.send(returnSingularRow(dataInsert, singularModel, res));
   })
   .catch(next)
 }
 
+
+/**
+ * verifySegments on interval range
+ * 
+ * @param {array} intervals - Interval rules
+ * @param {string} type - Type for check - used on specific_day
+ * @param {string} specific_day - Day specific on rule
+ * @param {object} status, message - {true/false,string} 
+ */
+const verifySegments = (intervals, type, specific_day) => {
+  const tamIntervals = intervals.length;
+  let rules;
+  for (let i = 0; i < tamIntervals; i += 1) {
+    if (type === 'specific_day') {
+      rules = lodash.merge(
+        filterRules(intervals[i].start_time, intervals[i].end_time, 'daily'),
+        filterRules(intervals[i].start_time, intervals[i].end_time, 'weekly'),
+        filterRules(intervals[i].start_time, intervals[i].end_time, 'specific_day', undefined, specific_day)
+      );
+    } else {
+      rules = filterRules(intervals[i].start_time, intervals[i].end_time);
+    }
+    if (rules.length > 0) {
+      return {status: false, message: `Já existe a regra: '${rules[0].rule_name}' neste mesmo intervalo de tempo`};
+    }
+  }
+
+  return {status: true};
+}
+
+/**
+ * Action getRules
+ * 
+ * @param {object} req - Request HTTP
+ * @param {object} res - HTTP Response
+ * @param {func} next - Callback
+ */
 exports.getRules = (req, res, next) => {
   req
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
     const { type, start_time, end_time, rule_name } = req.query;
-    const roles = filterRules(type, start_time, end_time, rule_name);
-    res.send(returnPluralRow(roles, res));
+    const rules = filterRules(start_time, end_time, type, rule_name);
+    res.send(returnPluralRow(rules, pluralModel, res));
   })
   .catch(next)
 }
 
+/**
+ * Action deleteRule
+ * 
+ * @param {object} req - Request HTTP
+ * @param {object} res - HTTP Response
+ * @param {func} next - Callback
+ */
 exports.deleteRule = (req, res, next) => {
   req
   .getValidationResult()
@@ -112,6 +157,12 @@ exports.deleteRule = (req, res, next) => {
   .catch(next)
 }
 
+/**
+ * Verify if exists a rule with a rule_name
+ * 
+ * @param {string} rule_name - rule_name for verify
+ * @return {boolean} true, false
+ */
 const verifyRuleName = (rule_name) => {
   let returnVerify = false;
   const dataBase = newContextJson(fileHandler.getDatabase());
@@ -125,6 +176,12 @@ const verifyRuleName = (rule_name) => {
   return returnVerify;
 }
 
+/**
+ * Verify if exists a rule with an id
+ * 
+ * @param {string} rule_id - Id for removes rules
+ * @return {array} rules without rule id
+ */
 const verifyRuleId = (rule_id) => {
   let returnVerify = false;
   const dataBase = newContextJson(fileHandler.getDatabase());
@@ -138,6 +195,12 @@ const verifyRuleId = (rule_id) => {
   return returnVerify;
 }
 
+/**
+ * Deletes a rule inside database Rules
+ * 
+ * @param {string} rule_id - Id for removes rules
+ * @return {array} rules without rule id
+ */
 const deleteById = (rule_id) => {
   const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
@@ -147,7 +210,16 @@ const deleteById = (rule_id) => {
   return rules;
 }
 
-const filterRules = (type, start_time, end_time, rule_name) => {
+/**
+ * Filter rules on database json of rules
+ * 
+ * @param {string} type - Type for filter
+ * @param {string} start_time - Start Time Interval
+ * @param {string} end_time - End Time Interval
+ * @param {string} rule_name - Rule Name for filter
+ * @return {array} rules
+ */
+const filterRules = (start_time, end_time, type, rule_name, specific_day) => {
   const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
@@ -157,16 +229,33 @@ const filterRules = (type, start_time, end_time, rule_name) => {
       }
 
       if (
-        (type && index.type === type && typeof rule_name === "undefined") ||
-        (rule_name && index.rule_name === rule_name && typeof type === "undefined") ||
+        (type && index.type === type && typeof rule_name === "undefined" && typeof specific_day === "undefined") ||
+        (rule_name && index.rule_name === rule_name && typeof type === "undefined" && typeof specific_day === "undefined") ||
+        (specific_day && index.specific_day === specific_day && typeof rule_name === "undefined" && typeof type === "undefined" && typeof specific_day === "undefined") ||
         (
           rule_name && index.rule_name === rule_name && 
-          type && index.type === type
+          type && index.type === type &&
+          specific_day && index.specific_day === specific_day
+        ) ||
+        (
+          rule_name && index.rule_name === rule_name && 
+          type && index.type === type &&
+          typeof specific_day === "undefined"
+        ) ||
+        (
+          rule_name && index.rule_name === rule_name && 
+          specific_day && index.specific_day === specific_day && 
+          typeof type === "undefined"
+        ) ||
+        (
+          type && index.type === type && 
+          specific_day && index.specific_day === specific_day && 
+          typeof rule_name === "undefined"
         )
       ) {
         index.intervals = filterIntervals(index.intervals, start_time, end_time);
         return (index.intervals.length > 0);
-      } else if (typeof rule_name === "undefined" && typeof type === "undefined") {
+      } else if (typeof specific_day === "undefined" && typeof rule_name === "undefined" && typeof type === "undefined") {
         index.intervals = filterIntervals(index.intervals, start_time, end_time);
         return (index.intervals.length > 0);
       } else {
@@ -177,6 +266,14 @@ const filterRules = (type, start_time, end_time, rule_name) => {
   return rules;
 }
 
+/**
+ * Filter interval_range of datas
+ * 
+ * @param {array} intervals - Array of Intervals
+ * @param {string} start_time - Start Time Interval
+ * @param {string} end_time - End Time Interval
+ * @return {Promise} reject,resolve
+ */
 const filterIntervals = (intervals, start_time, end_time) => {
   let timeSegments;
   intervals = intervals.filter(element => {
@@ -196,6 +293,12 @@ const filterIntervals = (intervals, start_time, end_time) => {
   return intervals;
 }
 
+/**
+ * Validates API inputs on querys and request_data
+ * 
+ * @param {string} method - createRule, getRules, deleteRule
+ * @return {Promise} reject,resolve
+ */
 exports.validate = method => {
   switch (method) {
     case 'createRule': {
@@ -216,7 +319,7 @@ exports.validate = method => {
           const { type } = req.body;
           if (
             type &&
-            type === 'week_days' &&
+            type === 'weekly' &&
             typeof week_days === "undefined" || week_days === ""
           ) {
             return Promise.reject(genericErrors.NOT_EXISTS);
