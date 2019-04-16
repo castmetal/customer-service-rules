@@ -28,12 +28,30 @@ const returnPluralRow = (array, res) => {
   return returnData;
 }
 
+const verifyIntervalEntry = (intervals, next) => {
+  const tamInterval = intervals.length;
+  for (let i = 0; i < tamInterval; i += 1) {
+    const startSplit = intervals[i].start_time.split(':');
+    const endSplit = intervals[i].end_time.split(':');
+    if (
+      (startSplit[0] > endSplit[0]) ||
+      (startSplit[0] === endSplit[0] && startSplit[1] >= endSplit[1])
+    ) {
+      const error = new Error(`intervals[${i}].end_time deve ser maior que intervals[${i}].start_time`);
+      error.statusCode = 422;
+      error.code = "INVALID_FIELD";
+      return next(error);
+    }
+  }
+}
+
 exports.createRule = (req, res, next) => {
   req
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
     const { type, specific_day, intervals, week_days, rule_name } = req.body;
+    verifyIntervalEntry(intervals, next);
     if (verifyRuleName(rule_name)) {
       const error = new Error(
         'Já existe regra com a mesma rule_name cadastrada. \n'+
@@ -63,8 +81,8 @@ exports.getRules = (req, res, next) => {
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
-    const { type, start_time, end_time } = req.query;
-    const roles = filterRules(type, start_time, end_time);
+    const { type, start_time, end_time, rule_name } = req.query;
+    const roles = filterRules(type, start_time, end_time, rule_name);
     res.send(returnPluralRow(roles, res));
   })
   .catch(next)
@@ -129,7 +147,7 @@ const deleteById = (rule_id) => {
   return rules;
 }
 
-const filterRules = (type, start_time, end_time) => {
+const filterRules = (type, start_time, end_time, rule_name) => {
   const dataBase = newContextJson(fileHandler.getDatabase());
   const rules = lodash.filter(
     dataBase.data, 
@@ -137,12 +155,22 @@ const filterRules = (type, start_time, end_time) => {
       if (!type && !start_time && !end_time) {
         return true;
       }
-      if (type && index.type === type) {
+
+      if (
+        (type && index.type === type && typeof rule_name === "undefined") ||
+        (rule_name && index.rule_name === rule_name && typeof type === "undefined") ||
+        (
+          rule_name && index.rule_name === rule_name && 
+          type && index.type === type
+        )
+      ) {
+        index.intervals = filterIntervals(index.intervals, start_time, end_time);
+        return (index.intervals.length > 0);
+      } else if (typeof rule_name === "undefined" && typeof type === "undefined") {
         index.intervals = filterIntervals(index.intervals, start_time, end_time);
         return (index.intervals.length > 0);
       } else {
-        index.intervals = filterIntervals(index.intervals, start_time, end_time);
-        return (index.intervals.length > 0);
+        return false;
       }
     }
   );
@@ -224,7 +252,6 @@ exports.validate = method => {
         }),
         body('intervals.*.start_time', genericErrors.NOT_EXISTS).exists(),
         body('intervals.*.start_time').custom(start_time => {
-          console.log(start_time);
           if (start_time && validateTime(start_time) === false) {
             return Promise.reject(genericErrors.INVALID_FIELD);
           } else if (typeof start_time === "undefined") {
@@ -248,6 +275,9 @@ exports.validate = method => {
         query('type', genericErrors.NOT_VALID)
         .optional()
         .isIn(['specific_day', 'daily', 'weekly']),
+
+        query('rule_name', genericErrors.NOT_VALID)
+        .optional(),
         query('specific_day')
         .optional()
         .custom((day) => {
