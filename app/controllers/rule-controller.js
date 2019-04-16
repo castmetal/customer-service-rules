@@ -1,14 +1,32 @@
 const { body, query, param } = require('express-validator/check');
 const moment = require('moment');
+const slugify = require('slugify');
 const { genericErrors, validateTime, validationHandler } = require('./message-validators');
+const fileHandler = require('./utils/file-utils');
+const singularModel = 'rule';
+const pluralModel = 'rules';
+const defaultRowReturn = {data:{}};
 
 exports.createRule = (req, res, next) => {
   req
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
-    console.log(req);
-    res.send({"createRule": "ok"});
+    const { type, specific_day, start_time, end_time, week_days, rule_name } = req.body;
+    const dataInsert = {
+      type,
+      specific_day: specific_day || null,
+      start_time,
+      end_time,
+      week_days: week_days || null,
+      rule_name,
+      id: slugify(rule_name)
+    };
+
+    fileHandler.insertRuleToDataBase(dataInsert);
+    const returnData = defaultRowReturn;
+    returnData.data[singularModel] = dataInsert;
+    res.send(returnData);
   })
   .catch(next)
 }
@@ -48,6 +66,7 @@ exports.validate = method => {
         body('type', genericErrors.NOT_VALID)
         .isIn(['specific_day', 'daily', 'weekly']),
         body('week_days', genericErrors.NOT_VALID)
+        .optional()
         .isIn(['monday', 'tuesday', 'wednesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
         body('week_days')
         .custom((week_days, {req}) => {
@@ -86,7 +105,7 @@ exports.validate = method => {
         }),
         body('end_time', genericErrors.NOT_EXISTS).exists(),
         body('end_time').custom(end_time => {
-          if (end_time && validateTime(end_time)) {
+          if (end_time && validateTime(end_time) === false) {
             return Promise.reject(genericErrors.INVALID_FIELD);
           }
           return Promise.resolve(end_time);
@@ -113,7 +132,7 @@ exports.validate = method => {
           return Promise.resolve(start_time);
         }),
         query('end_time').custom(end_time => {
-          if (end_time && validateTime(end_time)) {
+          if (end_time && validateTime(end_time) === false) {
               return Promise.reject(genericErrors.INVALID_FIELD);
           }
           return Promise.resolve(end_time);
