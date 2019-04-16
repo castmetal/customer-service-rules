@@ -152,7 +152,7 @@ exports.deleteRule = (req, res, next) => {
     fileHandler.insertDataArrayToDataBase(newDatabase);
 
     res.set('Content-Type', 'application/json');
-    res.send({"status": "ok", "message": "Rule deletada com sucesso"}, 202);
+    res.status(202).send({"status": "ok", "message": "Rule deletada com sucesso"});
   })
   .catch(next)
 }

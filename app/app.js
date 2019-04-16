@@ -13,7 +13,9 @@ const basePath = process.env.SERVICE_PATH || '/customer-service';
 
 app.use(bodyParser.json());
 app.use(expressValidator());
-app.use(logger(environment));
+if (environment === 'dev') {
+  app.use(logger(environment));
+}
 app.use(express.urlencoded({ extended: false }));
 
 app.use('/', indexRouter);
