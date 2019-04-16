@@ -1,11 +1,31 @@
 const { body, query, param } = require('express-validator/check');
 const moment = require('moment');
 const slugify = require('slugify');
+const lodash = require('lodash');
 const { genericErrors, validateTime, validationHandler } = require('./message-validators');
 const fileHandler = require('./utils/file-utils');
 const singularModel = 'rule';
 const pluralModel = 'rules';
 const defaultRowReturn = {data:{}};
+
+const newContextJson = json => {
+  const stringiFy = JSON.stringify(json);
+  return JSON.parse(stringiFy);
+};
+
+const returnSingularRow = (row, res) => {
+  res.set('Content-Type', 'application/json');
+  const returnData = newContextJson(defaultRowReturn);
+  returnData.data[singularModel] = row;
+  return returnData;
+}
+
+const returnPluralRow = (array, res) => {
+  res.set('Content-Type', 'application/json');
+  const returnData = newContextJson(defaultRowReturn);
+  returnData.data[pluralModel] = array;
+  return returnData;
+}
 
 exports.createRule = (req, res, next) => {
   req
@@ -13,19 +33,26 @@ exports.createRule = (req, res, next) => {
   .then(validationHandler())
   .then(() => {
     const { type, specific_day, intervals, week_days, rule_name } = req.body;
+    if (verifyRuleName(rule_name)) {
+      const error = new Error(
+        'Já existe regra com a mesma rule_name cadastrada. \n'+
+        'Por favor digite outra e tente novamente'
+      );
+      error.statusCode = 403;
+      error.code = 'RULE_EXISTS';
+      return next(error);
+    }
     const dataInsert = {
+      id: slugify(rule_name),
+      rule_name,
       type,
       specific_day: specific_day || null,
       intervals,
       week_days: week_days || null,
-      rule_name,
-      id: slugify(rule_name)
     };
 
     fileHandler.insertRuleToDataBase(dataInsert);
-    const returnData = defaultRowReturn;
-    returnData.data[singularModel] = dataInsert;
-    res.send(returnData);
+    res.send(returnSingularRow(dataInsert, res));
   })
   .catch(next)
 }
@@ -35,8 +62,9 @@ exports.getRules = (req, res, next) => {
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
-    console.log(req);
-    res.send({"getRules": "ok"});
+    const { type, start_time, end_time } = req.query;
+    const roles = filterRules(type, start_time, end_time);
+    res.send(returnPluralRow(roles, res));
   })
   .catch(next)
 }
@@ -46,10 +74,91 @@ exports.deleteRule = (req, res, next) => {
   .getValidationResult()
   .then(validationHandler())
   .then(() => {
-    console.log(req);
-    res.send({"deleteRule": "ok"});
+    const { id } = req.params;
+    if (verifyRuleId(id) === false) {
+      const error = new Error(
+        `Não existe rule com ID: ${id}. \n`+
+        'Por favor digite outro e tente novamente'
+      );
+      error.statusCode = 403;
+      error.code = 'INVALID_ID';
+      return next(error);
+    }
+    const newDatabase = deleteById(id);
+    fileHandler.insertDataArrayToDataBase(newDatabase);
+
+    res.set('Content-Type', 'application/json');
+    res.send({"status": "ok", "message": "Rule deletada com sucesso"}, 202);
   })
   .catch(next)
+}
+
+const verifyRuleName = (rule_name) => {
+  let returnVerify = false;
+  const dataBase = fileHandler.getDatabase();
+  const rules = lodash.filter(
+    dataBase.data, 
+    index => index.rule_name === rule_name
+  );
+  if (rules.length > 0) {
+    returnVerify = true;
+  }
+  return returnVerify;
+}
+
+const verifyRuleId = (rule_id) => {
+  let returnVerify = false;
+  const dataBase = fileHandler.getDatabase();
+  const rules = lodash.filter(
+    dataBase.data, 
+    index => index.id === rule_id
+  );
+  if (rules.length > 0) {
+    returnVerify = true;
+  }
+  return returnVerify;
+}
+
+const deleteById = (rule_id) => {
+  const dataBase = fileHandler.getDatabase();
+  const rules = lodash.filter(
+    dataBase.data, 
+    index => index.id !== rule_id
+  );
+  return rules;
+}
+
+const filterRules = (type, start_time, end_time) => {
+  const dataBase = fileHandler.getDatabase();
+  const rules = lodash.filter(
+    dataBase.data, 
+    index => {
+      if (!type && !start_time && !end_time) {
+        return true;
+      }
+      if (type && index.type === type) {
+        index.intervals = filterIntervals(index.intervals, start_time, end_time);
+        return (index.intervals.length > 0);
+      } else {
+        index.intervals = filterIntervals(index.intervals, start_time, end_time);
+        return (index.intervals.length > 0);
+      }
+    }
+  );
+  return rules;
+}
+
+const filterIntervals = (intervals, start_time, end_time) => {
+  intervals = intervals.filter(element => {
+    if (!start_time && !end_time) {
+      return true;
+    }
+    if (start_time && !end_time && start_time === element.start_time) {
+      return true;
+    }
+  });
+
+  return intervals;
 }
 
 exports.validate = method => {

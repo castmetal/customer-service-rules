@@ -12,7 +12,7 @@ const insertRuleToDataBase = json => {
 const insertDataArrayToDataBase = json => {
   const dataBase = getDatabase();
   dataBase.data = json;
-  dataBase.count = data.length;
+  dataBase.count = json.length;
   fs.writeFileSync(databasePath, JSON.stringify(dataBase));
 };
 
