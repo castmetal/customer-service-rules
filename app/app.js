@@ -4,6 +4,7 @@ let express = require('express');
 let logger = require('morgan');
 let indexRouter = require('./routes/index');
 let rulesRouter = require('./routes/rules');
+let availableSchedulesRouter = require('./routes/available-schedules');
 const app = express();
 const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/', indexRouter);
 app.use(`${basePath}/rules`, rulesRouter);
+app.use(`${basePath}/available-schedules`, availableSchedulesRouter);
 
 /**
  * Generates errors on not found paths
