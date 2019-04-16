@@ -23,9 +23,14 @@
   },
   "homepage": "https://github.com/castmetal/customer-service-rules#readme",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "dotenv": "^7.0.0",
     "express": "^4.16.4",
+    "express-validator": "^5.3.1",
     "http-errors": "^1.7.2",
+    "lodash": "^4.17.11",
+    "moment": "^2.24.0",
+    "moment-range": "^4.0.2",
     "morgan": "^1.9.1"
   }
 }
