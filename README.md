@@ -21,30 +21,37 @@
 ## Endpoints:
 ### GET - /customer-service/rules
 Parameters:
-|Name         | Type                                                          |
-|-------------|--------------------------------------------------------------:|
+
+| Name        | Type                                                          |
+|-------------|---------------------------------------------------------------|
 |type         | string (query), Available values : specific_day, daily, weekly|
 |specific_day | string (query), Date Format (DD-MM-YYYY)                      |
 |start_time   | string (query), Time Format(HH:MM)                            |
 |end_time     | string (query), Time Format(HH:MM)                            |
 |rule_name    | string (query)                                                |
+
 ### POST - /customer-service/rules
 Parameters:
-|Name| Type | Required
-|---------------------|:--------------------------------------------------------------:|---------------------------------:|
+
+| Name                | Type                                                           | Required                         |
+|---------------------|----------------------------------------------------------------|----------------------------------|
 |type                 |string (body), - Available values : specific_day, daily, weekly |true                              |
 |specific_day         |string (body), Date Format (DD-MM-YYYY)                         |required if type is specific_day  |
 |intervals.start_time | string (body), Time Format(HH:MM)                              |true                              |
 |intervals.end_time   | string (body), Time Format(HH:MM)                              |true                              |
 |rule_name            | string (body), Min 3 characters                                |true                              |
+
 ### DELETE - /customer-service/rules/:id
 Parameters:
-|Name|Type           |Required|
-|----|:-------------:|-------:|
-|id  | string (path) |true    |
+
+| Name | Type          | Required |
+|------|---------------|----------|
+|id    | string (path) |true      |
+
 ### GET - /customer-service/available-schedules
 Parameters:
-|Name       |Type                                      |Required |
-|-----------|:----------------------------------------:|--------:|
-|start_date | string (query), Date Format (DD-MM-YYYY) | true    |
-|end_date   | string (query), Date Format (DD-MM-YYYY) | true    |
+
+| Name      | Type                                     | Required |
+|-----------|------------------------------------------|----------|
+|start_date | string (query), Date Format (DD-MM-YYYY) | true     |
+|end_date   | string (query), Date Format (DD-MM-YYYY) | true     |
