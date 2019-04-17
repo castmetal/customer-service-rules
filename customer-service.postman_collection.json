@@ -1,0 +1,268 @@
+{
+	"variables": [],
+	"info": {
+		"name": "customer-service",
+		"_postman_id": "ce8d1b50-971e-e58f-6ea3-52fc0ba10585",
+		"description": "## Endpoints:\n### GET - /customer-service/rules\nParameters:\n\n| Name        | Type                                                          |\n|-------------|---------------------------------------------------------------|\n|type         | string (query), Available values : specific_day, daily, weekly|\n|specific_day | string (query), Date Format (DD-MM-YYYY)                      |\n|start_time   | string (query), Time Format(HH:MM)                            |\n|end_time     | string (query), Time Format(HH:MM)                            |\n|rule_name    | string (query)                                                |\n\n### POST - /customer-service/rules\nParameters:\n\n| Name                | Type                                                           | Required                         |\n|---------------------|----------------------------------------------------------------|----------------------------------|\n|x-validate-intervals |string (header), - Available values : true, empty               |false                             |\n|type                 |string (body), - Available values : specific_day, daily, weekly |true                              |\n|week_days            |array (body), - Values: ['monday','tuesday','wednesday' ..]     |required if type is weekly        |\n|specific_day         |string (body), Date Format (DD-MM-YYYY)                         |required if type is specific_day  |\n|intervals.start_time | string (body), Time Format(HH:MM)                              |true                              |\n|intervals.end_time   | string (body), Time Format(HH:MM)                              |true                              |\n|rule_name            | string (body), Min 3 characters                                |true                              |\n\n### DELETE - /customer-service/rules/:id\nParameters:\n\n| Name | Type          | Required |\n|------|---------------|----------|\n|id    | string (path) |true      |\n\n### GET - /customer-service/available-schedules\nParameters:\n\n| Name      | Type                                     | Required |\n|-----------|------------------------------------------|----------|\n|start_date | string (query), Date Format (DD-MM-YYYY) | true     |\n|end_date   | string (query), Date Format (DD-MM-YYYY) | true     |",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://localhost:3000/customer-service/rules",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"type\": \"specific_day\",\n  \t\"specific_day\": \"25-06-2018\",\n\t\"rule_name\": \"rule1\",\n\t\"intervals\": [\n\t\t{\n\t\t\"start_time\": \"09:30\",\n\t\t\"end_time\": \"10:20\"\n\t\t},\n\t\t\n\t\t{\n\t\t\"start_time\": \"10:30\",\n\t\t\"end_time\": \"11:00\"\n\t\t}\n\t]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"type\": \"daily\",\n\t\"rule_name\": \"rule2\",\n\t\"intervals\": [\n\t\t{\n\t\t\"start_time\": \"09:30\",\n\t\t\"end_time\": \"10:10\"\n\t\t}\n\t]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"type\": \"weekly\",\n\t\"week_days\": [\"monday\",\"wednesday\"],\n\t\"rule_name\": \"rule4\",\n\t\"intervals\": [\n\t\t{\n\t\t\"start_time\": \"14:00\",\n\t\t\"end_time\": \"14:30\"\n\t\t}\n\t]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules/rule1",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules?type=daily",
+			"request": {
+				"url": {
+					"raw": "http://localhost:3000/customer-service/rules?type=daily",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"customer-service",
+						"rules"
+					],
+					"query": [
+						{
+							"key": "type",
+							"value": "daily",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/rules?start_time=09:30&end_time=15:00",
+			"request": {
+				"url": {
+					"raw": "http://localhost:3000/customer-service/rules?start_time=09:30&end_time=15:00",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"customer-service",
+						"rules"
+					],
+					"query": [
+						{
+							"key": "start_time",
+							"value": "09:30",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "end_time",
+							"value": "15:00",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:3000/customer-service/available-schedules?start_date=25-01-2018&end_date=29-01-2018",
+			"request": {
+				"url": {
+					"raw": "http://localhost:3000/customer-service/available-schedules?start_date=25-01-2018&end_date=29-01-2018",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"customer-service",
+						"available-schedules"
+					],
+					"query": [
+						{
+							"key": "start_date",
+							"value": "25-01-2018",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "end_date",
+							"value": "29-01-2018",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "createWithValidation",
+			"request": {
+				"url": "http://localhost:3000/customer-service/rules",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "x-validate-intervals",
+						"value": "true",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"type\": \"daily\",\n  \t\"specific_day\": \"25-01-2018\",\n\t\"rule_name\": \"nova\",\n\t\"intervals\": [{\n\t\t\"start_time\": \"09:20\",\n\t\t\"end_time\": \"10:50\"\n\t}]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
