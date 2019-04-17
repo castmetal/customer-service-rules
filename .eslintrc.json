@@ -1,0 +1,13 @@
+{
+    "extends": ["airbnb-base", "plugin:prettier/recommended"],
+    "env": {
+      "jest": true
+    },
+    "rules": {
+        "no-underscore-dangle": [1, { "allow": ["_id"] }],
+        "camelcase": [0],
+        "no-lone-blocks": [0]
+        
+    }
+  }
+  

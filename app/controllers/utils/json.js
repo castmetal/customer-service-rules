@@ -1,8 +1,8 @@
-const defaultRowReturn = {data:{}};
+const defaultRowReturn = { data: {} };
 
 /**
  * Returns a new context json
- * 
+ *
  * @param {object} json - original json
  * @return {object} json - new context json
  */
@@ -13,7 +13,7 @@ const newContextJson = json => {
 
 /**
  * Pluralize return data with json_apis
- * 
+ *
  * @param {object} row - returned Row
  * @param {string} pluralModel - model on ṕlural
  * @param {func} res - Response
@@ -24,11 +24,11 @@ const returnPluralRow = (array, pluralModel, res) => {
   const returnData = newContextJson(defaultRowReturn);
   returnData.data[pluralModel] = array;
   return returnData;
-}
+};
 
 /**
  * Singularize return data with json_apis
- * 
+ *
  * @param {object} row - returned Row
  * @param {string} singularModel - model on singular
  * @param {func} res - Response
@@ -39,10 +39,10 @@ const returnSingularRow = (row, singularModel, res) => {
   const returnData = newContextJson(defaultRowReturn);
   returnData.data[singularModel] = row;
   return returnData;
-}
+};
 
 module.exports = {
   newContextJson,
   returnPluralRow,
   returnSingularRow
-}
+};

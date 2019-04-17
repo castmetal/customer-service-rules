@@ -1,16 +1,8 @@
 const getValidationResult = async () => {
-  Request.prototype.then = function(resolve, reject) {
-    var self = this;
-    return new Promise(function(resolve, reject){
-      self.end(function(err, res){
-        if (err) reject(err); else resolve(res);
-      });
-    })
-    .then(resolve, reject);
-  };
-}
+  return false;
+};
 const makeRequest = params => {
-  const req = {body:{},query:{},param:{}};
+  const req = { body: {}, query: {}, param: {} };
   if (params && params.body) {
     req.body = params.body;
   }
@@ -26,4 +18,4 @@ const makeRequest = params => {
 
 module.exports = {
   makeRequest
-}
+};

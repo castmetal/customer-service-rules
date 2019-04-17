@@ -1,1 +1,1 @@
-{"data":[],"count":0}
+{"data":[{"id":"rule3","rule_name":"rule3","type":"weekly","specific_day":null,"intervals":[{"start_time":"14:00","end_time":"14:30"}],"week_days":["monday","wednesday"]},{"id":"rule2","rule_name":"rule2","type":"daily","specific_day":null,"intervals":[{"start_time":"09:30","end_time":"10:10"}],"week_days":null}],"count":2}

@@ -1,15 +1,16 @@
 require('dotenv').config();
 
-let express = require('express');
-let logger = require('morgan');
-let indexRouter = require('./routes/index');
-let rulesRouter = require('./routes/rules');
-let availableSchedulesRouter = require('./routes/available-schedules');
-const app = express();
+const express = require('express');
+const logger = require('morgan');
 const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
+const indexRouter = require('./routes/index');
+const rulesRouter = require('./routes/rules');
+const availableSchedulesRouter = require('./routes/available-schedules');
+
 const environment = process.env.NODE_ENV || 'dev';
 const basePath = process.env.SERVICE_PATH || '/customer-service';
+const app = express();
 
 app.use(bodyParser.json());
 app.use(expressValidator());
@@ -24,7 +25,7 @@ app.use(`${basePath}/available-schedules`, availableSchedulesRouter);
 
 /**
  * Generates errors on not found paths
- * 
+ *
  * @param {object} req - Request HTTP
  * @param {object} res - HTTP Response
  * @param {func} next - Callback
@@ -32,14 +33,14 @@ app.use(`${basePath}/available-schedules`, availableSchedulesRouter);
 app.use((req, res, next) => {
   const error = new Error('Página não encontrada');
   error.statusCode = 404;
-  error.code = "PAGE_NOTFOUND";
+  error.code = 'PAGE_NOTFOUND';
 
   next(error);
 });
 
 /**
  * Error handler on server
- * 
+ *
  * @param {object} err - Error
  * @param {object} req - Request HTTP
  * @param {object} res - HTTP Response
@@ -52,13 +53,14 @@ app.use((err, req, res, next) => {
 
   res.status(err.statusCode || 500);
   const errorMessages = err.message.split('|');
-  let messages = [];
+  const messages = [];
   for (let i = 0; i < errorMessages.length; i += 1) {
-    messages.push({message: errorMessages[i], code: err.code});
+    messages.push({ message: errorMessages[i], code: err.code });
   }
-  
+
   res.set('Content-Type', 'application/json');
-  res.send({ errors: messages});
+  res.send({ errors: messages });
+  next();
 });
 
 module.exports = app;
