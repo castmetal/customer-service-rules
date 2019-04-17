@@ -247,12 +247,15 @@ exports.createRule = (req, res, next) => {
         error.code = 'RULE_EXISTS';
         return next(error);
       }
-      const segments = verifySegments(intervals, type, specific_day);
-      if (segments.status === false) {
-        const err = new Error(segments.message);
-        err.statusCode = 403;
-        err.code = 'RULE_EXISTS';
-        return next(err);
+      //Faz a validação de regras if header x-validate-intervals = true
+      if (req.get('x-validate-intervals') === 'true') {
+        const segments = verifySegments(intervals, type, specific_day);
+        if (segments.status === false) {
+          const err = new Error(segments.message);
+          err.statusCode = 403;
+          err.code = 'RULE_EXISTS';
+          return next(err);
+        }
       }
       const dataInsert = {
         id: slugify(rule_name),

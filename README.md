@@ -35,7 +35,9 @@ Parameters:
 
 | Name                | Type                                                           | Required                         |
 |---------------------|----------------------------------------------------------------|----------------------------------|
+|x-validate-intervals |string (header), - Available values : true, empty               |false                             |
 |type                 |string (body), - Available values : specific_day, daily, weekly |true                              |
+|week_days            |array (body), - Values: ['monday','tuesday','wednesday' ..]     |required if type is weekly        |
 |specific_day         |string (body), Date Format (DD-MM-YYYY)                         |required if type is specific_day  |
 |intervals.start_time | string (body), Time Format(HH:MM)                              |true                              |
 |intervals.end_time   | string (body), Time Format(HH:MM)                              |true                              |

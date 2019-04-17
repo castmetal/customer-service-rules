@@ -1,0 +1,326 @@
+openapi: 3.0.0
+servers:
+  - description: Customer Service
+    url: https://virtserver.swaggerhub.com/mlaguardia/customer-service/1.0.0
+info:
+  description: This is API of Back-end Challenge - Customer Service Rules
+  version: "1.0.0"
+  title: Customer service
+  contact:
+    email: mlaguardia@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: rules
+    description: Rules for calls by Customer Service
+  - name: avaible-schedules
+    description: List avaible schedules
+paths:
+  /rules:
+    get:
+      summary: searches rules for customer service
+      tags:
+      - rules
+      parameters:
+        - $ref: '#/components/parameters/type'
+        - $ref: '#/components/parameters/specific_day'
+        - $ref: '#/components/parameters/start_time'
+        - $ref: '#/components/parameters/end_time'
+        - $ref: '#/components/parameters/rule_name'
+      responses:
+        '200':
+          $ref: '#/components/responses/RulesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+    post:
+      summary: creates rule
+      parameters:
+        - $ref: '#/components/parameters/x-validate-intervals'
+      tags:
+      - rules
+      responses:
+        '201':
+          $ref: '#/components/responses/RuleResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInput'
+        description: Rule to create
+  /rules/{id}:
+    delete:
+      summary: deletes a rule
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/rule_id'
+      responses:
+        '202':
+          description: item deleted
+  /available-schedules:
+    get:
+      summary: searches avaible schedules for customer service
+      tags:
+      - available-schedules
+      parameters:
+        - $ref: '#/components/parameters/start_date'
+        - $ref: '#/components/parameters/end_date'
+      responses:
+        '200':
+          $ref: '#/components/responses/SchedulesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        source:
+          type: string
+          example: "type"
+        message:
+          type: string
+          example: Error
+        code:
+          type: string
+          example: "FIELD_REQUIRED"
+    Errors:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Datetime:
+      type: string
+      format: date-time
+      example: "27-11-2018 16:42:31"
+    Date:
+      type: string
+      format: date-time
+      example: "27-11-2018"
+    ContentJson:
+      type: string
+      example: application/json
+      default: application/json
+    RuleInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['specific_day','daily','weekly']
+          example: specific_day
+        specific_day:
+          $ref: '#/components/schemas/Date'
+        start_time:
+          type: string
+          example: "16:43"
+        end_time:
+          type: string
+          example: "20:43"
+        week_days:
+          type: string
+          enum: ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+        rule-name:
+          type: string
+          example: "28-de-abril"
+      required:
+        - type
+        - start_time
+        - end_time
+        - rule_name
+    Rule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "28-de-abril"
+        type:
+          type: string
+          enum: ['specific_day','daily','weekly']
+          example: specific_day
+        specific_day:
+          $ref: '#/components/schemas/Date'
+        intervals:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: string
+                example: "16:30"
+              end:
+                type: string
+                example: "20:30"
+        week_days:
+          type: string
+          enum: ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+        rule-name:
+          type: string
+          example: "28-de-abril"
+      required:
+        - type
+        - start_time
+        - end_time
+        - rule_name
+    Schedule:
+      type: array
+      items:
+        type: object
+        properties:
+          day:
+            $ref: '#/components/schemas/Date'
+          intervals:
+            type: array
+            items:
+              type: object
+              properties:
+                start:
+                  type: string
+                  example: "16:30"
+                end:
+                  type: string
+                  example: "20:30"
+        required:
+          - type
+          - start_time
+          - end_time
+          - rule_name
+  responses:
+    SuccessNoContent:
+      description: Success no content
+    BadRequestError:
+      description: error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    ValidationError:
+      description: bad input parameter
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    NotFoundError:
+      description: item not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    RuleResponse:
+      description: Rule model
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  rule:
+                    $ref: '#/components/schemas/Rule'
+    RulesResponse:
+      description: Array of rules
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rule'
+    SchedulesResponse:
+      description: Array of schedules
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Schedule'
+  parameters:
+    rule_id:
+      in: path
+      name: id
+      description: rule ID
+      required: true
+      schema:
+        type: string
+        example:
+          key: "28-de-abril"
+    type:
+      name: type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: ['specific_day','daily','weekly']
+        example:
+          key: specific_day
+    specific_day:
+      name: specific_day
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example:
+          key: "2018-11-27T16:42:31Z"
+    start_time:
+      name: start_time
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example:
+          key: "16:42"
+    end_time:
+      name: end_time
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example:
+          key: "20:43"
+    start_date:
+      name: start_date
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Datetime'
+    end_date:
+      name: end_date
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Datetime'
+    rule_name:
+      name: rule_name
+      in: query
+      required: false
+      schema:
+        type: string
+        example:
+          key: "28-de-abril"
+    x-validate-intervals:
+      name: x-validate-intervals
+      in: header
+      required: false
+      schema:
+        type: string
+        example:
+          key: "true"
+    contentJson:
+      name: content-type
+      in: header
+      schema:
+        $ref: '#/components/schemas/ContentJson'
